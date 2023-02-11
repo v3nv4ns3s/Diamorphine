@@ -26,10 +26,16 @@ Todo and ideas
 --
 
 1 - Test the sys_read hook compatibility across different kernels 
+
 2 - Implement boot persistence 
+
 3 - Implement persistence via DNS lookups, something like making a query to a domain defined in the diamorphine.h every hour, decoding the response hostname field and executing it. I honestly don't even know if it's possible to do this using LKM, but I'll figure a cool way to do this I hope. 
+
 4 - Implement a way of hiding UDP/TCP connections 
-5 - Something pretty freaking cool would be hooking the SSHD auth_password function and exfiltrating the credentials via DNS, again, I don't even know if this is possible to do using LKM, but I'll try. 
+
+5 - Something pretty freaking cool would be hooking the SSHD auth_password function and exfiltrating the credentials via DNS, again, I don't even know if this is 
+possible to do using LKM, but I'll try. 
+
 6 - Chkrootkit bypass 
 
 Configure
@@ -41,10 +47,12 @@ For file content tampering, modify diamorphine.h `HIDETAGIN` and `HIDETAGOUT`, a
 #define HIDETAGIN "<viajano>"
 #define HIDETAGOUT "</viajano>"
 ```
+
 Install
 --
 
 Verify if the kernel is 2.6.x/3.x/4.x/5.x
+
 ```
 uname -r
 ```
@@ -85,9 +93,13 @@ rmmod diamorphine
 Installing it on really fucked up machines 
 -- 
 A lot of times the kernel headers will be missing, tips: 
-1 - /lib/modules/`uname -r`/build is just a symlink to /usr/src/linux-headers-`uname -r`, sometimes the symlink is pointing to a path that no longer exists but the kernel headers are installed in /usr/src 
-2 - If the kernel headers are really missing or incompatible, you need to install them, apt-get install linux-headers-`uname -r` will fail 99% of the time, try installing other versions of the package. Also, the repository list of the target could be fucked up. 
+
+1 - /lib/modules/$(uname -r)/build is just a symlink to /usr/src/linux-headers-$(uname -r), sometimes the symlink is pointing to a path that no longer exists but the kernel headers are installed in /usr/src 
+
+2 - If the kernel headers are really missing or incompatible, you need to install them, apt-get install linux-headers-$(uname -r) will fail 99% of the time, try installing other versions of the package. Also, the repository list of the target could be fucked up. 
+
 3 - If nothing works, download locally the same version of the kernel that the box is using, compile it, install the headers, compile diamorphine and upload the LKM files into the target. 
+
 4 - If you're crazy or just have nothing to lose, you can try live kernel patching. 
 
 References
