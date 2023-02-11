@@ -25,7 +25,7 @@ Features
 Configure
 --
 
-Change diamorphine.h `HIDETAGIN` and `HIDETAGOUT`  
+For file content tampering, modify diamorphine.h `HIDETAGIN` and `HIDETAGOUT`, all content from the HIDETAGIN to the HIDETAGOUT will be hidden.   
 
 ```
 #define HIDETAGIN "<viajano>"
