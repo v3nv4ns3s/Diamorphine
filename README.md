@@ -20,6 +20,8 @@ Features
 
 - File content tampering by hooking sys_read (I basically just copied this feature from f0rb1dd3n reptile with a few changes to make it work here. Don't expect much uheauh.  
 
+- Spawn a DNSCAT session when the module is loaded and automatically hide it's process.
+
 - Source: https://github.com/m0nad/Diamorphine
 
 Todo and ideas 
@@ -27,16 +29,14 @@ Todo and ideas
 
 1 - Test the sys_read hook compatibility across different kernels 
 
-2 - Implement boot persistence 
+2 - Implement boot persistence (otherwise the dnscat feature doesn't make any sense hueahue) 
 
-3 - Implement persistence via DNS lookups, something like making a query to a domain defined in the diamorphine.h every hour, decoding the response hostname field and executing it. I honestly don't even know if it's possible to do this using LKM, but I'll figure a cool way to do this I hope. 
+3 - Implement a way of hiding UDP/TCP connections 
 
-4 - Implement a way of hiding UDP/TCP connections 
-
-5 - Something pretty freaking cool would be hooking the SSHD auth_password function and exfiltrating the credentials via DNS, again, I don't even know if this is 
+4 - Something pretty freaking cool would be hooking the SSHD auth_password function and exfiltrating the credentials via DNS, again, I don't even know if this is 
 possible to do using LKM, but I'll try. 
 
-6 - Chkrootkit bypass 
+5 - Chkrootkit bypass 
 
 Configure
 --
@@ -47,6 +47,10 @@ For file content tampering, modify diamorphine.h `HIDETAGIN` and `HIDETAGOUT`, a
 #define HIDETAGIN "<viajano>"
 #define HIDETAGOUT "</viajano>"
 ```
+
+To enable the dnscat feature set `DNSCATSHELL` to 1 in `diamorphine.h` and define a valid domain (this is, with glue records pointing to your VPS ip address), run the 
+dnscat server and everytime you load the module you will receive a shell. Also, you need to place the dnscat client binary inside the `RK_PATH`, otherwise it won't work.
+
 
 Install
 --
