@@ -30,7 +30,6 @@ Example:
 ```
 #define HIDETAGIN "<viajano>"
 #define HIDETAGOUT "</viajano>"
-
 ```
 Install
 --
