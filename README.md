@@ -25,8 +25,8 @@ Features
 Configure
 --
 
-Change diamorphine.h `HIDETAGIN` and `HIDETAGOUT` 
-Example: 
+Change diamorphine.h `HIDETAGIN` and `HIDETAGOUT`  
+
 ```
 #define HIDETAGIN "<viajano>"
 #define HIDETAGOUT "</viajano>"
