@@ -125,8 +125,7 @@ out:
 	return ret;
 }
 
-// hiding the dnscat process 
-// one of the worst ways possible to do this, but who cares, it works
+// hiding the dnscat process, one of the worst ways possible to do it but who cares, it works
 static int init_func(struct subprocess_info *info, struct cred *new)
 {
 		char pid_str[12];
