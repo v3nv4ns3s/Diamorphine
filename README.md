@@ -1,7 +1,8 @@
 Diamorphine
 ===========
 
-Diamorphine is a LKM rootkit for Linux Kernels 2.6.x/3.x/4.x/5.x and ARM64
+Diamorphine is a LKM rootkit for Linux Kernels 2.6.x/3.x/4.x/5.x and ARM64.
+
 This fork is just me trying to implement new features in m0nad's awesome rk.
 
 Features
