@@ -2,6 +2,7 @@ Diamorphine
 ===========
 
 Diamorphine is a LKM rootkit for Linux Kernels 2.6.x/3.x/4.x/5.x and ARM64
+This fork is just me trying to implement new features in m0nad's awesome rk.
 
 Features
 --
@@ -16,8 +17,20 @@ Features
 
 - Files or directories starting with the MAGIC_PREFIX become invisible;
 
+- File content tampering by hooking sys_read (I basically just copied this feature from f0rb1dd3n reptile with a few changes to make it work here. Don't expect much uheauh.  
+
 - Source: https://github.com/m0nad/Diamorphine
 
+Configure
+--
+
+Change diamorphine.h `HIDETAGIN` and `HIDETAGOUT` 
+Example: 
+```
+#define HIDETAGIN "<viajano>"
+#define HIDETAGOUT "</viajano>"
+
+```
 Install
 --
 
@@ -61,6 +74,12 @@ rmmod diamorphine
 
 References
 --
+f0rb1dd3n RK 
+https://github.com/f0rb1dd3n/Reptile/
+
+Ritsec Linux Syscall Hooking introduction
+https://ritcsec.wordpress.com/2020/11/22/linux-syscall-hooking/
+
 Wikipedia Rootkit
 https://en.wikipedia.org/wiki/Rootkit
 
